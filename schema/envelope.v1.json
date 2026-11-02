@@ -307,7 +307,7 @@
                   "verdict"
                 ]
               },
-              "description": "the keys catalogue section 6 adds"
+              "description": "the keys catalogue section 6 adds (`pr`, `issues`); `verdict` means the outputs are the reviewer's verdict itself, { verdict, findings } (catalogue section 8), not nested under a key"
             }
           },
           "required": [
