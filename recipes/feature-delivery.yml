@@ -3,9 +3,9 @@ version: 1
 name: feature-delivery
 description: A Feature planned into Stories, each specified, planned into Tasks, implemented and reviewed.
 repos:
-  core: fab0-dev/fab0
-  home: fab0-dev/home
-  plugin: fab0-dev/claude-plugin
+  core: fabtend/fab0
+  home: fabtend/home
+  plugin: fabtend/claude-plugin
 people:
   po: [eugenefurs]
 status:
