@@ -6,7 +6,7 @@
 //
 // It runs as a person who may make issue types and labels (an organization owner), never as the fab0 App, which
 // only reads (B.15). The token comes from GH_TOKEN or `gh auth token` and is never printed (M.2). It needs Node
-// alone: no package to install. Released to fab0-dev/home's setup/ by fab0's release-home workflow.
+// alone: no package to install. Released to fabtend/home's setup/ by fab0's release-home workflow.
 
 import { execFileSync } from "node:child_process";
 import { parseArgs } from "node:util";
