@@ -16,12 +16,37 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
-      - name: validate recipes against the schema (Ajv, strict)
+      - name: install the validator (Ajv, yaml), at exact versions
+        run: npm install --no-save --no-package-lock --prefix "$RUNNER_TEMP/v" ajv@8.20.0 yaml@2.9.1
+      - name: validate every pipeline of every recipe against the v2 schema (Ajv, strict)
+        env:
+          NODE_PATH: ${{ runner.temp }}/v/node_modules
         run: |
-          if ls recipes/*.yml >/dev/null 2>&1; then
-            npx --yes --package=ajv-cli@5.0.0 --package=ajv-formats@3.0.1 -- \
-              ajv validate --spec=draft2020 --strict=true -c ajv-formats \
-              -s schema/pipeline.v1.json -d "recipes/*.yml"
-          else
-            echo "no recipes yet"
-          fi
+          node - <<'EOF'
+          const fs = require("node:fs");
+          const Ajv2020 = require("ajv/dist/2020").default;
+          const { parseAllDocuments } = require("yaml");
+          const validate = new Ajv2020({ strict: true, allErrors: true })
+            .compile(JSON.parse(fs.readFileSync("schema/pipeline.v2.json", "utf8")));
+          const files = fs.existsSync("recipes")
+            ? fs.readdirSync("recipes").filter((f) => f.endsWith(".yml")).sort()
+            : [];
+          if (files.length === 0) console.log("no recipes yet");
+          let failed = false;
+          for (const file of files) {
+            const docs = parseAllDocuments(fs.readFileSync(`recipes/${file}`, "utf8"));
+            docs.forEach((doc, i) => {
+              const where = `recipes/${file} document ${i + 1}`;
+              if (doc.errors.length > 0) {
+                failed = true;
+                console.error(`${where}: ${doc.errors.map((e) => e.message).join("; ")}`);
+              } else if (!validate(doc.toJS())) {
+                failed = true;
+                console.error(`${where}: ${JSON.stringify(validate.errors)}`);
+              } else {
+                console.log(`${where} valid`);
+              }
+            });
+          }
+          process.exit(failed ? 1 : 0);
+          EOF
