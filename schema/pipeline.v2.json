@@ -1,0 +1,379 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.fab0.dev/pipeline.v2.json",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 2
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,62}$",
+      "description": "the pipeline's name, unique in the tenant"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[^\\r\\n]*$"
+    },
+    "people": {
+      "description": "groups for by lists",
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/By"
+      }
+    },
+    "executors": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]{0,62}$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/Executor"
+      }
+    },
+    "start": {
+      "description": "how runs of this pipeline begin; without it, only as a child",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Start"
+      }
+    },
+    "limits": {
+      "$ref": "#/$defs/Limits"
+    },
+    "states": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]{0,62}$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/State"
+      },
+      "minProperties": 1,
+      "description": "the state machine; its first key is the initial state"
+    }
+  },
+  "required": [
+    "version",
+    "name",
+    "executors",
+    "states"
+  ],
+  "additionalProperties": false,
+  "title": "fab0 pipeline",
+  "description": "A fab0 pipeline: one document of a pipelines file",
+  "$defs": {
+    "By": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "logins, and group names from `people`"
+    },
+    "Executor": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "http"
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https:\\/\\/(?:\\[[0-9A-Fa-f:.]+\\]|[^\\s/\\\\?#@:\\[\\]]+)(?::0*(?:6553[0-5]|655[0-2]\\d|65[0-4]\\d{2}|6[0-4]\\d{3}|[1-5]\\d{4}|\\d{1,4})?)?(?:[/\\\\?#]\\S*)?$"
+            },
+            "secret": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+            }
+          },
+          "required": [
+            "type",
+            "url",
+            "secret"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "claude-routine"
+            },
+            "url": {
+              "type": "string",
+              "pattern": "^https:\\/\\/api\\.anthropic\\.com\\/v1\\/claude_code\\/routines\\/trig_[A-Za-z0-9]{1,64}\\/fire$"
+            },
+            "secret": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+            }
+          },
+          "required": [
+            "type",
+            "url",
+            "secret"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "manual"
+            },
+            "by": {
+              "description": "who may claim its attempts",
+              "$ref": "#/$defs/By"
+            }
+          },
+          "required": [
+            "type",
+            "by"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Start": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "string",
+          "minLength": 1,
+          "description": "api: start_run starts the pipeline; or an adapter's signal name, such as github.issues.labeled"
+        },
+        "where": {
+          "description": "for an adapter's signal: fields of its payload and the values they must equal",
+          "$ref": "#/$defs/Where"
+        }
+      },
+      "required": [
+        "on"
+      ],
+      "additionalProperties": false
+    },
+    "Where": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "description": "fields of the payload and the values they must equal"
+    },
+    "Limits": {
+      "type": "object",
+      "properties": {
+        "children": {
+          "description": "child runs a run may start over its life; default 20",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "depth": {
+          "description": "how deep runs started from this pipeline may nest; default 2",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "visits": {
+          "description": "visits per state in one run; default 10",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "additionalProperties": false
+    },
+    "State": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EndState"
+        },
+        {
+          "$ref": "#/$defs/StepState"
+        }
+      ]
+    },
+    "EndState": {
+      "type": "object",
+      "properties": {
+        "end": {
+          "type": "string",
+          "enum": [
+            "succeeded",
+            "failed"
+          ],
+          "description": "entering the state ends the run with this status"
+        }
+      },
+      "required": [
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "StepState": {
+      "type": "object",
+      "properties": {
+        "run": {
+          "description": "the executor fired on entry",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,62}$"
+        },
+        "with": {
+          "description": "passed to the step in its envelope, as written",
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        },
+        "timeout": {
+          "description": "each attempt's deadline, or, without run, the visit's",
+          "type": "string",
+          "pattern": "^[1-9][0-9]*[smhd]$"
+        },
+        "retries": {
+          "description": "attempts after the first within a visit; default 0",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "outputs": {
+          "description": "a JSON Schema (draft 2020-12) that complete's outputs must satisfy",
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        },
+        "children": {
+          "description": "the step may start child runs, of this pipeline only when named",
+          "anyOf": [
+            {
+              "type": "boolean",
+              "const": true
+            },
+            {
+              "type": "object",
+              "properties": {
+                "pipeline": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{0,62}$"
+                }
+              },
+              "required": [
+                "pipeline"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "on": {
+          "description": "transitions, by signal name",
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Target"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Target": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,62}$"
+        },
+        {
+          "$ref": "#/$defs/Condition"
+        },
+        {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Condition"
+          }
+        }
+      ],
+      "description": "where a signal leads"
+    },
+    "Condition": {
+      "type": "object",
+      "properties": {
+        "to": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,62}$"
+        },
+        "where": {
+          "$ref": "#/$defs/Where"
+        },
+        "by": {
+          "description": "who may send it (E.7)",
+          "$ref": "#/$defs/By"
+        }
+      },
+      "required": [
+        "to"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
