@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Prepares a GitHub organization for a fab0 pipeline (ARCHITECTURE O.1, spec R6.17): the issue types its items
-// take, and in each repository the status labels its steps move them through, with fab0/pause and fab0/cancel.
+// take, and in each repository the status labels its steps move them through. It makes no label of fab0's own:
+// pause and cancel are tools, not labels (ADR 0027).
 // It reads what exists first, makes only what is missing, and changes nothing that exists, so a second run writes
 // nothing. It prints its plan, and writes only with --apply.
 //
@@ -14,12 +15,12 @@ import { parseArgs } from "node:util";
 const USAGE = `Usage: node fab0-setup.mjs <organization> <repository> [<repository> ...] [options]
 
 Prepares a GitHub organization for a fab0 pipeline: the issue types its items
-take, and in each repository the status labels its steps move them through,
-with fab0/pause and fab0/cancel. It reads what exists, plans what is missing,
-and changes nothing that exists. Nothing is written without --apply.
+take, and in each repository the status labels its steps move them through.
+It reads what exists, plans what is missing, and changes nothing that exists.
+Nothing is written without --apply.
 
 Options:
-  --labels <a,b,...>  the status labels (default: Todo,Ready,InProgress,InReview,Done)
+  --labels <a,b,...>  the status labels (default: Ready)
   --types <a,b,...>   the issue types (default: Feature,Story,Task)
   --apply             make the changes the plan lists
   --help              show this help
@@ -27,13 +28,8 @@ Options:
 Run it as an organization owner. It takes the token from GH_TOKEN, or from
 \`gh auth token\` when GitHub CLI is signed in, and never prints it.`;
 
-const DEFAULT_LABELS = ["Todo", "Ready", "InProgress", "InReview", "Done"];
+const DEFAULT_LABELS = ["Ready"];
 const DEFAULT_TYPES = ["Feature", "Story", "Task"];
-// The labels fab0 reads on a run's root item and people set (ARCHITECTURE H.5, L.1).
-const FAB0_LABELS = [
-  { name: "fab0/pause", color: "fbca04", description: "Holds the fab0 run this item starts; remove it to resume" },
-  { name: "fab0/cancel", color: "b60205", description: "Cancels the fab0 run this item starts" },
-];
 const STATUS_COLORS = ["c5def5", "bfdadc", "fef2c0", "d4c5f9", "c2e0c6"];
 
 const API = (process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
@@ -127,9 +123,6 @@ function readArguments() {
   const labels = values.labels === undefined ? DEFAULT_LABELS : names(values.labels.split(","));
   const types = values.types === undefined ? DEFAULT_TYPES : names(values.types.split(","));
   if (labels.length === 0 || types.length === 0) throw new Refusal("--labels and --types each need at least one name.");
-  if (labels.some((label) => FAB0_LABELS.some((own) => same(own.name, label)))) {
-    throw new Refusal("fab0/pause and fab0/cancel are always made; leave them out of --labels.");
-  }
   return { org, repos: names(repos), labels, types, apply: values.apply };
 }
 
@@ -150,14 +143,11 @@ async function plan({ org, repos, labels, types }) {
     return { name, found, action: !found ? "create" : found.is_enabled === false ? "enable" : "exists" };
   });
 
-  const wanted = [
-    ...labels.map((name, i) => ({
-      name,
-      color: STATUS_COLORS[i % STATUS_COLORS.length],
-      description: `fab0 pipeline status, ${i + 1} of ${labels.length}`,
-    })),
-    ...FAB0_LABELS,
-  ];
+  const wanted = labels.map((name, i) => ({
+    name,
+    color: STATUS_COLORS[i % STATUS_COLORS.length],
+    description: `fab0 pipeline status, ${i + 1} of ${labels.length}`,
+  }));
   const labelSteps = [];
   for (const repo of repos) {
     const path = `/repos/${encodeURIComponent(org)}/${encodeURIComponent(repo)}/labels`;
