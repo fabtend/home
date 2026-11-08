@@ -1,31 +1,38 @@
 #!/usr/bin/env node
-// Prepares a GitHub organization for a fab0 pipeline (ARCHITECTURE O.1, spec R6.17): the issue types its items
-// take, and in each repository the status labels its steps move them through. It makes no label of fab0's own:
-// pause and cancel are tools, not labels (ADR 0027).
+// plugins/fab0-setup/scripts/fab0-setup.mjs: prepares GitHub for a fab0 pipeline (ARCHITECTURE O.1, spec R6.17,
+// stage 12 spec R12.14): the issue types its items take, in an organization, and in each repository the status
+// labels its steps move them through. Either kind may be "" for none, but not both; a user account, which has no
+// issue types (K.1), gets labels only. It makes no label of fab0's own: pause and cancel are tools, not labels
+// (ADR 0027).
 // It reads what exists first, makes only what is missing, and changes nothing that exists, so a second run writes
 // nothing. It prints its plan, and writes only with --apply.
 //
-// It runs as a person who may make issue types and labels (an organization owner), never as the fab0 App, which
-// only reads (B.15). The token comes from GH_TOKEN or `gh auth token` and is never printed (M.2). It needs Node
-// alone: no package to install. Released to fabtend/home's setup/ by fab0's release-home workflow.
+// It runs as a person who may make issue types and labels (an organization owner, or for labels alone a person
+// who may write to the repository), never as the fab0 App, which only reads (B.14). The token comes from GH_TOKEN
+// or `gh auth token` and is never printed (M.2). It needs Node alone: no package to install. Released with the
+// fab0-setup plugin, and to fabtend/home's setup/ (stage 12 spec R12.17).
 
 import { execFileSync } from "node:child_process";
 import { parseArgs } from "node:util";
 
-const USAGE = `Usage: node fab0-setup.mjs <organization> <repository> [<repository> ...] [options]
+const USAGE = `Usage: node fab0-setup.mjs <owner> <repository> [<repository> ...] [options]
 
-Prepares a GitHub organization for a fab0 pipeline: the issue types its items
-take, and in each repository the status labels its steps move them through.
-It reads what exists, plans what is missing, and changes nothing that exists.
-Nothing is written without --apply.
+Prepares GitHub for a fab0 pipeline: the issue types its items take, in the
+owner's organization, and in each repository the status labels its steps move
+them through. It reads what exists, plans what is missing, and changes nothing
+that exists. Nothing is written without --apply.
 
 Options:
-  --labels <a,b,...>  the status labels (default: Ready)
-  --types <a,b,...>   the issue types (default: Feature,Story,Task)
+  --labels <a,b,...>  the status labels (default: Ready); "" for none
+  --types <a,b,...>   the issue types (default: Feature,Story,Task); "" for none
   --apply             make the changes the plan lists
   --help              show this help
 
-Run it as an organization owner. It takes the token from GH_TOKEN, or from
+--labels "" and --types "" together ask for nothing, and are refused. Only
+organizations have issue types: for a user account, pass --types "".
+
+Run it as an organization owner, or for labels alone as a person who may write
+to the repositories. It takes the token from GH_TOKEN, or from
 \`gh auth token\` when GitHub CLI is signed in, and never prints it.`;
 
 const DEFAULT_LABELS = ["Ready"];
@@ -114,7 +121,7 @@ function readArguments() {
   const { values, positionals } = parsed;
   if (values.help) return null;
   const [org, ...given] = positionals;
-  if (!org || given.length === 0) throw new Refusal(`Name the organization and at least one repository.\n\n${USAGE}`);
+  if (!org || given.length === 0) throw new Refusal(`Name the owner and at least one repository.\n\n${USAGE}`);
   const repos = given.map((repo) => {
     const name = repo.startsWith(`${org}/`) ? repo.slice(org.length + 1) : repo;
     if (name.includes("/")) throw new Refusal(`${repo} is not a repository of ${org}.`);
@@ -122,7 +129,9 @@ function readArguments() {
   });
   const labels = values.labels === undefined ? DEFAULT_LABELS : names(values.labels.split(","));
   const types = values.types === undefined ? DEFAULT_TYPES : names(values.types.split(","));
-  if (labels.length === 0 || types.length === 0) throw new Refusal("--labels and --types each need at least one name.");
+  if (labels.length === 0 && types.length === 0) {
+    throw new Refusal('--labels "" and --types "" together ask for nothing: name at least one label or issue type.');
+  }
   return { org, repos: names(repos), labels, types, apply: values.apply };
 }
 
@@ -131,13 +140,11 @@ async function plan({ org, repos, labels, types }) {
   const account = await request("GET", `/users/${encodeURIComponent(org)}`).catch(
     missing(`There is no GitHub account named ${org}.`),
   );
-  if (account.type !== "Organization") {
-    throw new Refusal(
-      `${org} is a user account. Issue types exist only in organizations, so fab0 runs pipelines for organizations only.`,
-    );
+  if (account.type !== "Organization" && types.length > 0) {
+    throw new Refusal(`${org} is a user account, and only organizations have issue types: pass --types "".`);
   }
 
-  const existingTypes = await list(`/orgs/${encodeURIComponent(org)}/issue-types`);
+  const existingTypes = types.length > 0 ? await list(`/orgs/${encodeURIComponent(org)}/issue-types`) : [];
   const typeSteps = types.map((name) => {
     const found = existingTypes.find((each) => same(each.name, name));
     return { name, found, action: !found ? "create" : found.is_enabled === false ? "enable" : "exists" };
@@ -149,7 +156,7 @@ async function plan({ org, repos, labels, types }) {
     description: `fab0 pipeline status, ${i + 1} of ${labels.length}`,
   }));
   const labelSteps = [];
-  for (const repo of repos) {
+  for (const repo of wanted.length > 0 ? repos : []) {
     const path = `/repos/${encodeURIComponent(org)}/${encodeURIComponent(repo)}/labels`;
     const existing = await list(path).catch(
       missing(`There is no repository ${org}/${repo}, or the token can't read it.`),
@@ -171,11 +178,13 @@ function show({ org, repos }, { typeSteps, labelSteps }) {
   const width = Math.max(...all.map((step) => step.name.length)) + 2;
   const line = (step) =>
     `  ${step.name.padEnd(width)}${WORDS[step.action]}${differs(step) ? `, named ${step.found.name} on GitHub` : ""}`;
-  say(`fab0 setup for the organization ${org}`);
-  say();
-  say("Issue types");
-  for (const step of typeSteps) say(line(step));
-  for (const repo of repos) {
+  say(`fab0 setup for ${org}`);
+  if (typeSteps.length > 0) {
+    say();
+    say("Issue types");
+    for (const step of typeSteps) say(line(step));
+  }
+  for (const repo of labelSteps.length > 0 ? repos : []) {
     say();
     say(`Labels in ${org}/${repo}`);
     for (const step of labelSteps.filter((each) => each.repo === repo)) say(line(step));
@@ -243,7 +252,11 @@ async function main() {
   show(options, steps);
   const changes = summary(steps.typeSteps, steps.labelSteps);
   if (!changes) {
-    say(`Nothing to do: ${options.org} has every issue type and each repository every label.`);
+    const has = [
+      options.types.length > 0 && `${options.org} has every issue type`,
+      options.labels.length > 0 && "each repository has every label",
+    ];
+    say(`Nothing to do: ${has.filter(Boolean).join(", and ")}.`);
     return;
   }
   if (!options.apply) {
@@ -263,7 +276,9 @@ main().catch((error) => {
     complain(error.message);
     if (error.status === 401) complain("The token was refused. Check GH_TOKEN, or sign in again with `gh auth login`.");
     if (error.status === 403 || error.status === 404) {
-      complain("Making issue types and labels needs an organization owner's token.");
+      complain(
+        "Making issue types needs an organization owner's token, and labels one that may write to the repository.",
+      );
     }
     if (made > 0) complain("What was made before this stays; run again to make the rest.");
   } else {
