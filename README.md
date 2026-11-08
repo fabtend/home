@@ -1,13 +1,20 @@
 # fab0 home
 
-The public home of fab0: the published JSON Schemas, served at `https://schema.fab0.dev/`, the recipe library of tested pipelines, and the skills a repository copies into its `.claude/skills/`.
+The public home of fab0: the published JSON Schemas, served at `https://schema.fab0.dev/`, the recipe library of tested pipelines, and the setup script that prepares a GitHub account for them.
 
-- `schema/`: `pipeline.v2.json`, `envelope.v2.json` and `_headers`, the output directory Cloudflare Pages serves.
-- `recipes/`: pipeline documents for `.fab0/pipelines.yml`, each valid against `pipeline.v2.json`.
-- `skills/`: `fab0-work` and `fab0-pipelines`, the same skills the fab0 plugin carries.
-- `setup/` and `routine-settings.json`: what a repository needs to have its steps worked by a routine.
+Everything here is authored and tested in `fabtend/fab0`, and copied here by one of two releases there. Each release opens a pull request from `fab0-release[bot]` that a person reviews and merges. Don't edit these folders by hand.
 
-All of it is authored and tested in `fabtend/fab0` and copied here by its release workflow, as a pull request from `fab0-release[bot]` that a person reviews. Don't edit them by hand.
+| Folder | Written by | What it holds |
+| --- | --- | --- |
+| `schema/` | fab0's engine release, on its tag `v<version>` | the JSON Schemas (`pipeline.v2.json`, `envelope.v2.json`) and `_headers`, the output directory Cloudflare Pages serves at `https://schema.fab0.dev/` |
+| `recipes/` | the `fab0-setup` plugin's release, on its tag `fab0-setup-v<version>` | pipeline documents for `.fab0/pipelines.yml`, each valid against `pipeline.v2.json`; this repository's CI validates them |
+| `setup/` | the `fab0-setup` plugin's release, on its tag `fab0-setup-v<version>` | `fab0-setup.mjs`, the script that makes the issue types and status labels a pipeline uses |
+
+From `v0.3.0`, the engine's release also writes `plugins.md`, the guide for writing a fab0 plugin, beside `schema/`.
+
+The two releases are independent: a `fab0-setup` release changes only `recipes/` and `setup/`, and an engine release never touches them. This README and `.github/`, its CI, are this repository's own.
+
+Until fab0's engine release `v0.3.0`, `skills/` (`fab0-work` and `fab0-pipelines`, the same skills the `fab0` plugin `1.x` carries), `routine-settings.json` and the saved prompt below stay here, for the routines of fab0's v2 contract. That release removes `skills/` and `routine-settings.json`, and the saved prompt leaves this README with it.
 
 ## A routine's saved prompt
 
