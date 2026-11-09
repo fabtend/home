@@ -9,8 +9,9 @@ Everything here is authored and tested in `fabtend/fab0`, and copied here by one
 | `schema/` | fab0's engine release, on its tag `v<version>` | the JSON Schemas (`pipeline.v2.json`, `envelope.v2.json`) and `_headers`, the output directory Cloudflare Pages serves at `https://schema.fab0.dev/` |
 | `recipes/` | the `fab0-setup` plugin's release, on its tag `fab0-setup-v<version>` | pipeline documents for `.fab0/pipelines.yml`, each valid against `pipeline.v2.json`; this repository's CI validates them |
 | `setup/` | the `fab0-setup` plugin's release, on its tag `fab0-setup-v<version>` | `fab0-setup.mjs`, the script that makes the issue types and status labels a pipeline uses |
+| `site/` | fab0's engine release, on its tag `v<version>` | the site at `fab0.dev`, served by Cloudflare Pages: `index.html`, `privacy.html` (the privacy notice, at `/privacy`), `style.css` and `_headers` |
 
-From `v0.3.0`, the engine's release also writes `plugins.md`, the guide for writing a fab0 plugin, beside `schema/`.
+From `v0.3.0`, the engine's release also writes `plugins.md`, the guide for writing a fab0 plugin, beside `schema/`. It copies `site/` only from `v0.3.0` too: until then `site/` is the copy of fab0's `main` that fab0's stage 14 added by one pull request.
 
 The two releases are independent: a `fab0-setup` release changes only `recipes/` and `setup/`, and an engine release never touches them. This README and `.github/`, its CI, are this repository's own.
 
