@@ -13,8 +13,7 @@
   </header>
   <main>
     <h1>fab0 privacy notice</h1>
-    <p class="lead">This notice describes fab0 from version v0.3.0. It was last changed on 9 November 2026.</p>
-    <p>Until v0.3.0 is released, the only account that uses fab0's production service is fabtend's own.</p>
+    <p class="lead">This notice describes fab0 from version v0.3.0. It was last changed on 10 November 2026.</p>
 
     <h2>Who we are and how to reach us</h2>
     <p>fab0 is a product of fabtend. fabtend runs fab0 and is the controller of the personal data this notice describes. In this notice, "the operator" is fabtend.</p>
@@ -90,6 +89,12 @@
           <td>KV</td>
           <td>not pinned</td>
           <td>an access token 1 hour; a grant 30 days after its last refresh</td>
+        </tr>
+        <tr>
+          <td>Registered apps: each app's client id, the name and redirect URIs it sent, and its secret hashed</td>
+          <td>KV</td>
+          <td>not pinned</td>
+          <td>60 days from its registration; a sign-in or refresh in its last 30 days renews it for 60</td>
         </tr>
         <tr>
           <td>Pages: a dead letter's run or delivery id</td>
