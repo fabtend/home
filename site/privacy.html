@@ -13,7 +13,7 @@
   </header>
   <main>
     <h1>fab0 privacy notice</h1>
-    <p class="lead">This notice describes fab0 from version v0.3.0. It was last changed on 10 November 2026.</p>
+    <p class="lead">This notice describes fab0 from version v0.3.0. It was last changed on 14 November 2026.</p>
 
     <h2>Who we are and how to reach us</h2>
     <p>fab0 is a product of fabtend. fabtend runs fab0 and is the controller of the personal data this notice describes. In this notice, "the operator" is fabtend.</p>
@@ -21,10 +21,10 @@
 
     <h2>What fab0 is</h2>
     <p>fab0 is a pipeline driver and the record of its runs, offered as a service. A pipeline is a state machine its user writes as code. fab0 holds each run's state, calls each step at an endpoint the user owns (their own service, an agent's endpoint, or a person's queue), moves the run on when a signal arrives, and keeps the run's record. fab0 decides nothing for its users: it does not judge, approve, merge or label their work.</p>
-    <p>An account on GitHub, an organization or a person, uses fab0 by installing the fab0 GitHub App. That account is a <em>tenant</em>. The App only reads: repository metadata, issues, pull requests, and the one file <code>.fab0/pipelines.yml</code>. People sign in to fab0 with GitHub, through a remote MCP server for their AI assistants and the same operations over a REST API. A person who can reach one of the tenant's installed repositories is one of its <em>members</em>.</p>
+    <p>An account on GitHub, an organization or a person, uses fab0 once its admin puts a pipeline, or by installing the fab0 GitHub App. That account is a <em>tenant</em>. The App, when installed, only reads: repository metadata, issues, pull requests, and the one file <code>.fab0/pipelines.yml</code>. People sign in to fab0 with GitHub, through a remote MCP server for their AI assistants and the same operations over a REST API. The owner of a user account, and each active member of an organization, is one of its tenant's <em>members</em>.</p>
 
     <h2>What fab0 keeps</h2>
-    <p>fab0 keeps what it needs to run its tenants' pipelines and to be the record of their runs, which is the service a tenant installs it for. This table is everything it keeps, where, and for how long.</p>
+    <p>fab0 keeps what it needs to run its tenants' pipelines and to be the record of their runs, which is the service a tenant uses it for. This table is everything it keeps, where, and for how long.</p>
     <table>
       <thead>
         <tr><th scope="col">Data</th><th scope="col">Store</th><th scope="col">Where</th><th scope="col">Kept</th></tr>
@@ -34,19 +34,19 @@
           <td>A run's record: the inputs it took, its signals, transitions and attempts with their outputs, usage, cost and telemetry, its state and data</td>
           <td>the run's Durable Object</td>
           <td>EU</td>
-          <td>while the tenant is installed; deleted 30 days after an uninstall, or when an admin asks once the run's tree has ended</td>
+          <td>while the tenant exists; deleted when an admin asks once the run's tree has ended, or with the tenant</td>
         </tr>
         <tr>
-          <td>The tenant: its installation, repositories, pipelines and their versions, its members' GitHub logins and ids, and the index of its runs</td>
+          <td>The tenant: its installation if it has one, repositories, pipelines and their versions, its members' GitHub logins and ids, and the index of its runs</td>
           <td>the tenant's Durable Object</td>
           <td>EU</td>
-          <td>while the tenant is installed, a pipeline version that is neither active nor used by an active run 30 days; deleted 30 days after an uninstall</td>
+          <td>while the tenant exists, a pipeline version that is neither active nor used by an active run 30 days; a tenant without the App installed is deleted 90 days after its last activity, its active runs with it</td>
         </tr>
         <tr>
-          <td>Executor secrets, encrypted</td>
+          <td>Executor and source secrets, encrypted</td>
           <td>the tenant's Durable Object</td>
           <td>EU</td>
-          <td>until replaced or deleted; deleted at an uninstall</td>
+          <td>until replaced or deleted, or the tenant is</td>
         </tr>
         <tr>
           <td>Applied webhook delivery ids, with each delivery's event and sender's login</td>
@@ -124,19 +124,20 @@
     <h2>Where it is kept and who provides it</h2>
     <p><strong>Cloudflare</strong> hosts fab0: its programs, Durable Objects, D1 database, R2 buckets, queues, key-value store, Analytics Engine, and the mail routing of <a href="mailto:privacy@fab0.dev">privacy@fab0.dev</a>. Every store marked "EU" in the table is in Cloudflare's EU jurisdiction. The rows marked "not pinned" are not: Analytics Engine and the sign-in grants may be stored outside the European Union. Where fab0's programs run is not controlled either: Cloudflare may run them, and process the data that passes through them, outside the European Union.</p>
     <p><strong>The operator's mailbox</strong> receives the mail sent to <a href="mailto:privacy@fab0.dev">privacy@fab0.dev</a>, and fab0's alerts to the operator, which hold a run's or a delivery's id. It is not pinned to the European Union either.</p>
-    <p><strong>GitHub</strong> is where the events and the sign-ins come from: the App receives the events of the repositories it is installed on, and people sign in with their GitHub account. fab0 writes nothing to GitHub.</p>
+    <p><strong>GitHub</strong> is where the sign-ins come from, and, for a tenant with the App installed, the events: the App receives the events of the repositories it is installed on, and people sign in with their GitHub account. fab0 writes nothing to GitHub.</p>
     <p>When a step fires, fab0 calls the endpoint the tenant's pipeline names, authorized by the tenant's secret, and sends it one id. That endpoint belongs to the tenant or to a service the tenant chose, and reads the step through fab0's API with that id. What it does with what it reads is the tenant's choice.</p>
 
     <h2>Who can read it</h2>
-    <p>A tenant's members read its runs and their records through fab0's API, after signing in with GitHub. An admin of one of the tenant's installed repositories can also change its pipelines, set its secrets and delete its records. No one reads a secret's value back.</p>
+    <p>A tenant's members read its runs and their records through fab0's API, after signing in with GitHub. An admin of the tenant, an admin of its organization or the owner of its user account, can also change its pipelines, set its secrets and delete its records. No one reads a secret's value back.</p>
     <p>The operator reads ids, codes and numbers in the logs and metrics to keep fab0 running, and can reach every store through its Cloudflare account to repair the service. It reads a tenant's data only for that, or when the tenant asks.</p>
 
     <h2>How it is deleted</h2>
-    <p><strong>When a tenant uninstalls the App,</strong> its secrets are deleted at once and its active runs are cancelled. 30 days later, every run of the tenant, its records, its rows in the catalogue and the tenant itself are deleted. If the App is installed again on the same account within those 30 days, nothing more is deleted: the runs, their records and the pipelines are kept.</p>
-    <p><strong>While the App is installed,</strong> an admin of one of the tenant's installed repositories can delete the tenant's records with one call, using their own GitHub token:</p>
+    <p><strong>A tenant without the App installed,</strong> one that never installed it or that uninstalled it, is deleted 90 days after its last activity: a member's sign-in, a pipeline put, an event from one of its sources, a call from one of its GitHub Actions workflows, or a run's end; a step its executor completes doesn't count. Then every run of the tenant, active or ended, its records, its secrets, its rows in the catalogue and the tenant itself are deleted, and once that has begun, nothing stops it.</p>
+    <p><strong>When a tenant uninstalls the App,</strong> nothing is deleted: its runs go on, and its pipelines, secrets and records are kept. Its 90 days start then. A tenant that uninstalled the App before 14 November 2026 keeps the rule it had: everything of it is deleted 30 days after the uninstall, unless the App is installed on the account again first.</p>
+    <p><strong>At any time,</strong> an admin of the tenant can delete the tenant's records with one call, using their own GitHub token:</p>
     <pre><code>curl -fsS -X DELETE "https://mcp.fab0.dev/api/v1/records?tenant=$TENANT" -H "Authorization: Bearer $(gh auth token)"</code></pre>
-    <p>Before it, set <code>TENANT</code> in your shell to the id of the GitHub account that installed the App, which fab0's <code>whoami</code> tool shows as <code>tenants[].id</code>. The call deletes every run tree of the tenant whose runs have all ended, within minutes: a run and the child runs it started, at every depth, with their records and catalogue rows. It keeps every tree that has a run still active, and the tenant's pipelines, members and secrets. It answers how many runs are being deleted and how many are kept. Calling it again is harmless.</p>
-    <p>To delete everything at once, delete the records, then uninstall the App: the rest goes 30 days later. The other stores keep their own periods, given in the table: webhook bodies 30 days, delivery ids 7 days, logs 30 days and metrics 3 months, the last two holding ids only. A sign-in grant expires 30 days after it was last refreshed. To have anything else deleted, write to <a href="mailto:privacy@fab0.dev">privacy@fab0.dev</a>.</p>
+    <p>Before it, set <code>TENANT</code> in your shell to the id of the tenant's GitHub account, which fab0's <code>whoami</code> tool shows as <code>tenants[].id</code>. The call deletes every run tree of the tenant whose runs have all ended, within minutes: a run and the child runs it started, at every depth, with their records and catalogue rows. It keeps every tree that has a run still active, and the tenant's pipelines, members and secrets. It answers how many runs are being deleted and how many are kept. Calling it again is harmless.</p>
+    <p>To delete everything, delete the records and the secrets, uninstall the App if it is installed, and stop using the tenant: the rest goes 90 days later. The other stores keep their own periods, given in the table: webhook bodies 30 days, delivery ids 7 days, logs 30 days and metrics 3 months, the last two holding ids only. A sign-in grant expires 30 days after it was last refreshed. To have anything else deleted, write to <a href="mailto:privacy@fab0.dev">privacy@fab0.dev</a>.</p>
 
     <h2>Changes to this notice</h2>
     <p>When what fab0 keeps, where, or for how long changes, this notice changes with it, and its date above changes. The notice is published from the same source as fab0's releases, which keeps it equal to fab0's own design.</p>
