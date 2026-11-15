@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.fab0.dev/envelope.v3.json",
+  "$id": "https://schema.fab0.dev/envelope.v4.json",
   "type": "object",
   "properties": {
     "fab0": {
       "type": "number",
-      "const": 3
+      "const": 4
     },
     "run": {
       "type": "object",

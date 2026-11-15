@@ -13,10 +13,20 @@ fab0 keeps no list of plugins. Nothing in fab0 registers, approves or loads your
 Only fab0's public contract, which changes only with a version:
 
 - **The tools and their schemas,** published as `schema/tools/*.json` and answered by `tools/list`: their names, inputs and answers.
-- **The JSON Schemas** at `https://schema.fab0.dev/`: the pipeline (`pipeline.v2.json`) and the envelope (`envelope.v3.json`).
-- **The envelope `fab0: 3`,** what an executor reads with `get_step`.
+- **The JSON Schemas** at `https://schema.fab0.dev/`: the pipeline (`pipeline.v2.json`) and the envelope (`envelope.v4.json`).
+- **The envelope `fab0: 4`,** what an executor reads with `get_step`.
 
 Everything else may change without notice: the text of a tool's description, the server's instructions, the shape of a log line, and how fab0 stores a run.
+
+The contract is v4. What it changed from v3:
+
+- **`sync_pipelines` is gone.** fab0 reads no file of a repository: put each pipelines file with `put_pipeline`, the one way in. A tenant's pipelines may sit in any number of files, by convention `.fab0/pipelines/<name>.yml`, one pipeline each.
+- **`remove_pipeline { tenant?, name }`** retires a pipeline, which a put never does by leaving its name out. Runs already started finish on their version, and a later put makes it active again. It needs the tenant's admin.
+- **The resource `fab0://pipelines/{tenant}/{name}` is listed** by `resources/list`, each active pipeline with its version and source.
+- **`whoami`** answers each tenant's `app`, whether the fab0 GitHub App is installed on it, and always answers `accounts`.
+- **The store warning `github-without-app`:** a pipeline waits on a `github.` signal in a tenant without the App, which receives none.
+- **The envelope is `fab0: 4`,** otherwise as v3's.
+- **Two widenings made within v3** are part of it too: `get_record`'s actor may be a source's (`ext.<source>`) or a workflow's, and the warning `ext-unchecked`.
 
 ## 3. Calling fab0
 
@@ -49,4 +59,4 @@ An agent that works pipeline steps needs no plugin. fab0 fires it with a step id
 
 ## 6. An example
 
-`fab0-setup`, in [`fabtend/claude-plugin`](https://github.com/fabtend/claude-plugin), is fabtend's own. It depends on `fab0`, calls `validate_pipeline` and `put_pipeline`, puts each pipelines file itself after a merge, ships its recipes inside the plugin, and has its own version and release.
+`fab0-setup`, in [`fabtend/claude-plugin`](https://github.com/fabtend/claude-plugin), is fabtend's own. It depends on `fab0`, calls `whoami`, `validate_pipeline` and `put_pipeline`, puts each pipelines file itself after a merge, ships its recipes inside the plugin, and has its own version and release.
