@@ -155,7 +155,7 @@
         "on": {
           "type": "string",
           "minLength": 1,
-          "description": "api: start_run starts the pipeline; or an adapter's signal name, such as github.issues.labeled"
+          "description": "api: start_run starts the pipeline; or an adapter's signal name, such as github.issues.labeled or ext.ci.ready"
         },
         "where": {
           "description": "for an adapter's signal: fields of its payload and the values they must equal",
