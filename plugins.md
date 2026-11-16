@@ -59,4 +59,4 @@ An agent that works pipeline steps needs no plugin. fab0 fires it with a step id
 
 ## 6. An example
 
-`fab0-setup`, in [`fabtend/claude-plugin`](https://github.com/fabtend/claude-plugin), is fabtend's own. It depends on `fab0`, calls `whoami`, `validate_pipeline` and `put_pipeline`, puts each pipelines file itself after a merge, ships its recipes inside the plugin, and has its own version and release.
+`fab0-setup`, in [`fabtend/claude-plugin`](https://github.com/fabtend/claude-plugin), is fabtend's own. It depends on `fab0`, calls `whoami`, `validate_pipeline`, `put_pipeline` and `remove_pipeline`, puts each pipelines file itself after a merge, retires with the person's yes the pipelines no file holds any more, which it finds from the merge's diff and the listed `fab0://pipelines/` resources, ships its recipes inside the plugin, and has its own version and release. Its 3.0.0 needs contract v4.
