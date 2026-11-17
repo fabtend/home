@@ -79,7 +79,7 @@
         "type": "string",
         "minLength": 1
       },
-      "description": "logins, and group names from `people`"
+      "description": "logins, and group names from `people`; on a transition, also `executor:<name>`, an executor of this pipeline whose rights are runs (E.7)"
     },
     "Executor": {
       "oneOf": [
@@ -97,6 +97,9 @@
             "secret": {
               "type": "string",
               "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+            },
+            "rights": {
+              "$ref": "#/$defs/Rights"
             }
           },
           "required": [
@@ -120,6 +123,9 @@
             "secret": {
               "type": "string",
               "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+            },
+            "rights": {
+              "$ref": "#/$defs/Rights"
             }
           },
           "required": [
@@ -148,6 +154,14 @@
           "additionalProperties": false
         }
       ]
+    },
+    "Rights": {
+      "type": "string",
+      "enum": [
+        "step",
+        "runs"
+      ],
+      "description": "what the executor's step id authorizes: step (the default), its own step's Work tools; runs, also floor, list_runs, get_run, get_record, start_run, signal and cancel_run on its tenant's runs, while its attempt is live"
     },
     "Start": {
       "type": "object",
