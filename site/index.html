@@ -4,19 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>fab0</title>
-  <meta name="description" content="fab0 is a pipeline driver and the record of its runs.">
+  <meta name="description" content="Run your software factory by chat. Add one connector to Claude and say: set up fab0.">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <main>
     <h1>fab0</h1>
-    <p class="lead">A pipeline driver and the record of its runs.</p>
-    <p>A pipeline is a state machine you write as code. fab0 holds each run's state, calls each step at an endpoint you own, moves the run on the signals your people, agents and GitHub send, and keeps the record of every run. It decides nothing for you.</p>
+    <p class="lead">Run your software factory by chat.</p>
+    <p>You describe how your work should move: what starts it, who or what does each step, and who decides. fab0 runs that line. It hands each step to your agents and people, knows where every piece of work stands, and keeps the record of everything that happened. It decides nothing for you.</p>
+
+    <h2>Start</h2>
+    <ol>
+      <li><strong>Add the fab0 connector.</strong> claude.ai: Settings, Connectors, add a custom connector named <code>fab0</code> at <code>https://mcp.fab0.dev/mcp</code>, press Connect. Claude Code: install the fab0 plugin, with <code>/plugin marketplace add fabtend/claude-plugin</code> and then <code>/plugin install fab0@fab0</code>.</li>
+      <li><strong>Say "set up fab0".</strong> Claude answers as fab0's Foreman and walks you through it: signing in with GitHub, your first pipeline, and your first run.</li>
+      <li><strong>Ask "what's going on?"</strong> whenever you like. Say "approve it" or "cancel it" to decide.</li>
+    </ol>
+
+    <h2>If your agents read untrusted input</h2>
+    <p>One connector serves you and your routines. Once you sign in on it from a claude.ai chat, your routines carry your session, and an agent could act as you. If your agents read issues or pages that anyone can write, give your routines a second connector that is never signed in. The Foreman tells you how.</p>
+  </main>
+  <footer>
     <p>fab0 is a product of fabtend.</p>
     <ul class="links">
       <li><a href="https://schema.fab0.dev/">The JSON Schemas</a> of fab0's pipelines, envelope and tools</li>
       <li><a href="/privacy">The privacy notice</a>: what fab0 keeps, where, for how long, and whom to ask</li>
     </ul>
-  </main>
+  </footer>
 </body>
 </html>

@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schema.fab0.dev/envelope.v4.json",
+  "$id": "https://schema.fab0.dev/envelope.v5.json",
   "type": "object",
   "properties": {
     "fab0": {
       "type": "number",
-      "const": 4
+      "const": 5
     },
     "run": {
       "type": "object",
@@ -214,6 +214,10 @@
       "type": "string",
       "minLength": 1,
       "description": "https://<host>/api/v1"
+    },
+    "rights": {
+      "description": "what this step id authorizes, as the pipeline sets it on the step's executor: step, this step's Work tools; runs, also floor, list_runs, get_run, get_record, start_run, signal and cancel_run on the tenant's runs, while the attempt is live",
+      "$ref": "#/$defs/Rights"
     }
   },
   "required": [
@@ -226,7 +230,8 @@
     "links",
     "outputs",
     "children",
-    "api"
+    "api",
+    "rights"
   ],
   "additionalProperties": false,
   "title": "fab0 envelope",
@@ -265,6 +270,14 @@
           }
         }
       ]
+    },
+    "Rights": {
+      "type": "string",
+      "enum": [
+        "step",
+        "runs"
+      ],
+      "description": "what the executor's step id authorizes: step (the default), its own step's Work tools; runs, also floor, list_runs, get_run, get_record, start_run, signal and cancel_run on its tenant's runs, while its attempt is live"
     }
   }
 }
